@@ -1,0 +1,262 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080d16">
+    <title>Sentinel SIEM | Security Operations</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/js/dashboard.js" defer></script>
+</head>
+<body>
+    <aside class="sidebar">
+        <a class="brand" href="#overview" aria-label="Sentinel dashboard home">
+            <div class="brand-icon">S</div>
+            <div>
+                <h2>SENTINEL</h2>
+                <small>SECURITY OPERATIONS</small>
+            </div>
+        </a>
+
+        <div class="nav-label">WORKSPACE</div>
+        <a class="nav-item active" href="#overview"><span class="nav-symbol">◈</span> Overview</a>
+        <a class="nav-item" href="#alerts"><span class="nav-symbol">!</span> Security Alerts</a>
+        <a class="nav-item" href="#events"><span class="nav-symbol">≋</span> Windows Events</a>
+        <a class="nav-item" href="#monitoring"><span class="nav-symbol">⌁</span> System Monitoring</a>
+
+        <div class="sidebar-note">
+            <span class="status-dot"></span>
+            <div>
+                <strong>Local monitoring agent</strong>
+                <small>Dashboard connection status</small>
+            </div>
+            <span id="agent-status" class="connected">CHECKING</span>
+        </div>
+
+        <div class="sidebar-bottom">
+            <span>LOCAL INSTANCE</span>
+            <span class="version-tag">SIEM</span>
+        </div>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <div>
+                <div class="eyebrow">SECURITY OPERATIONS CENTER / LOCAL</div>
+                <h1>Good to see you.</h1>
+                <p class="subtitle">Here is what's happening on your system right now.</p>
+            </div>
+            <div class="top-actions">
+                <span class="live-pill"><span class="pulse"></span> LIVE MONITORING</span>
+                <div class="clock-card">
+                    <small>LOCAL TIME</small>
+                    <span id="clock" class="clock">--:--:--</span>
+                </div>
+            </div>
+        </header>
+
+        <section id="overview">
+            <div class="section-heading">
+                <div>
+                    <h2>System at a glance</h2>
+                    <p class="section-description">A live snapshot of your computer's health.</p>
+                </div>
+                <span class="muted"><span class="status-dot"></span> Auto-refresh enabled</span>
+            </div>
+
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <div class="stat-top"><span>CPU USAGE</span><span class="metric-icon cyan-text">CPU</span></div>
+                    <div class="stat-value"><span id="cpu">--</span><small>%</small></div>
+                    <div class="progress"><div id="cpu-bar" class="progress-fill cyan"></div></div>
+                    <div class="stat-foot">Processor utilization</div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-top"><span>MEMORY USAGE</span><span class="metric-icon purple-text">RAM</span></div>
+                    <div class="stat-value"><span id="memory">--</span><small>%</small></div>
+                    <div class="progress"><div id="memory-bar" class="progress-fill purple"></div></div>
+                    <div id="memory-detail" class="stat-foot">Collecting memory data…</div>
+                </article>
+
+                <article class="stat-card">
+                    <div class="stat-top"><span>DISK USAGE</span><span class="metric-icon blue-text">SSD</span></div>
+                    <div class="stat-value"><span id="disk">--</span><small>%</small></div>
+                    <div class="progress"><div id="disk-bar" class="progress-fill blue"></div></div>
+                    <div class="stat-foot">System drive utilization</div>
+                </article>
+
+                <article class="stat-card alert-stat">
+                    <div class="stat-top"><span>OPEN ALERTS</span><span class="metric-icon red-text">!</span></div>
+                    <div id="open-alerts" class="stat-value">0</div>
+                    <div id="open-alerts-note" class="stat-foot">Alerts needing attention</div>
+                </article>
+            </div>
+
+            <div class="welcome-strip">
+                <div class="welcome-icon">i</div>
+                <div>
+                    <strong>Your security snapshot</strong>
+                    <p id="security-summary">Loading your latest monitoring results…</p>
+                </div>
+                <span id="summary-updated" class="summary-time">Waiting for data</span>
+            </div>
+        </section>
+
+        <section id="monitoring" class="panel">
+            <div class="panel-heading">
+                <div>
+                    <span class="panel-kicker">PERFORMANCE</span>
+                    <h2>System telemetry</h2>
+                    <p>Watch CPU and memory usage change over time.</p>
+                </div>
+                <span class="live-tag"><span class="pulse"></span> LIVE</span>
+            </div>
+            <div class="chart-wrap">
+                <canvas id="metrics-chart" aria-label="CPU and memory usage history"></canvas>
+            </div>
+            <div class="network-grid">
+                <div class="network-card">
+                    <span class="network-icon download">↓</span>
+                    <div><small>DOWNLOAD RATE</small><strong id="download">0 B/s</strong></div>
+                </div>
+                <div class="network-card">
+                    <span class="network-icon upload">↑</span>
+                    <div><small>UPLOAD RATE</small><strong id="upload">0 B/s</strong></div>
+                </div>
+                <div class="network-card">
+                    <span class="network-icon">●</span>
+                    <div><small>MONITORING SERVICE</small><strong id="monitoring-status">Checking connection…</strong></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="alerts" class="panel">
+            <div class="panel-heading">
+                <div>
+                    <span class="panel-kicker">INVESTIGATION QUEUE</span>
+                    <h2>Security alerts</h2>
+                    <p>Events that crossed a detection rule's threshold.</p>
+                </div>
+                <button id="refresh-btn" class="secondary-btn" type="button">↻ Refresh data</button>
+            </div>
+
+            <div class="filter-bar">
+                <label class="filter-control">
+                    <span>Severity</span>
+                    <select id="severity-filter">
+                        <option value="all">All severities</option>
+                        <option value="critical">Critical</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </label>
+                <label class="filter-control">
+                    <span>Status</span>
+                    <select id="status-filter">
+                        <option value="all">All statuses</option>
+                        <option value="open">Open</option>
+                        <option value="investigating">Investigating</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
+                </label>
+                <label class="filter-control search-control">
+                    <span>Search alerts</span>
+                    <input id="alert-search" type="search" placeholder="Search title or details…">
+                </label>
+                <span id="alert-count" class="result-count">Loading alerts…</span>
+            </div>
+
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>TIME</th>
+                            <th>SEVERITY</th>
+                            <th>DETECTION</th>
+                            <th>RISK</th>
+                            <th>STATUS</th>
+                            <th>SOURCE</th>
+                            <th>DETAILS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alerts-body">
+                        <tr><td colspan="7" class="empty-state">Loading alerts…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="panel-footnote">A detection is a reason to investigate, not proof that an attack occurred.</p>
+        </section>
+
+        <section id="events" class="panel">
+            <div class="panel-heading">
+                <div>
+                    <span class="panel-kicker">WINDOWS SECURITY LOG</span>
+                    <h2>Windows events</h2>
+                    <p>Recently collected records stored in your local SIEM database.</p>
+                </div>
+                <span class="stored-tag">STORED RECORDS</span>
+            </div>
+
+            <div class="filter-bar">
+                <label class="filter-control">
+                    <span>Event type</span>
+                    <select id="event-type-filter">
+                        <option value="all">All event IDs</option>
+                        <option value="4624">4624 · Successful logon</option>
+                        <option value="4625">4625 · Failed logon</option>
+                        <option value="1102">1102 · Audit log cleared</option>
+                    </select>
+                </label>
+                <label class="filter-control search-control">
+                    <span>Search events</span>
+                    <input id="event-search" type="search" placeholder="Search message, source, computer…">
+                </label>
+                <span id="event-count" class="result-count">Loading events…</span>
+            </div>
+
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>TIME</th>
+                            <th>EVENT ID</th>
+                            <th>EVENT TYPE</th>
+                            <th>COMPUTER</th>
+                            <th>SOURCE</th>
+                            <th>MESSAGE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="events-body">
+                        <tr><td colspan="6" class="empty-state">Loading stored Windows events…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="panel-footnote">Showing stored records. The event table does not itself classify an event as malicious.</p>
+        </section>
+
+        <footer>
+            <span>SENTINEL SIEM · LOCAL INSTANCE</span>
+            <span>Built for local monitoring and security learning.</span>
+        </footer>
+    </main>
+
+    <dialog id="alert-dialog" class="details-dialog">
+        <div class="dialog-header">
+            <div>
+                <span class="panel-kicker">ALERT INVESTIGATION</span>
+                <h2 id="dialog-title">Alert details</h2>
+            </div>
+            <button id="dialog-close" class="icon-button" type="button" aria-label="Close details">×</button>
+        </div>
+        <div id="dialog-content" class="dialog-content"></div>
+        <div class="dialog-footer">
+            <span class="muted">Review the surrounding logs before drawing conclusions.</span>
+            <button id="dialog-done" class="secondary-btn" type="button">Close details</button>
+        </div>
+    </dialog>
+</body>
+</html>
